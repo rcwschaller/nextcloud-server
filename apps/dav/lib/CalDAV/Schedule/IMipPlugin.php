@@ -18,6 +18,7 @@
  * @author Thomas Citharel <nextcloud@tcit.fr>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
  * @author Anna Larch <anna.larch@gmx.net>
+ * @author Robert C. Schaller <gtbc_robert.schaller@rsxc.de>
  *
  * @license AGPL-3.0
  *
@@ -135,15 +136,6 @@ class IMipPlugin extends SabreIMipPlugin {
 	 * @return void
 	 */
 	public function schedule(Message $iTipMessage) {
-		// Not sending any emails if the system considers the update
-		// insignificant.
-		if (!$iTipMessage->significantChange) {
-			if (!$iTipMessage->scheduleStatus) {
-				$iTipMessage->scheduleStatus = '1.0;We got the message, but it\'s not significant enough to warrant an email';
-			}
-			return;
-		}
-
 		if (parse_url($iTipMessage->sender, PHP_URL_SCHEME) !== 'mailto'
 			|| parse_url($iTipMessage->recipient, PHP_URL_SCHEME) !== 'mailto') {
 			return;
@@ -175,6 +167,16 @@ class IMipPlugin extends SabreIMipPlugin {
 		$oldVevent = !empty($modified['old']) && is_array($modified['old']) ? array_pop($modified['old']) : null;
 		$isModified = isset($oldVevent);
 
+		$sequenceIncremented = ( $this->imipService->readPropertyWithDefault($vEvent, 'SEQUENCE', '') > ($oldVevent == null ? '' : $this->imipService->readPropertyWithDefault($oldVevent, 'SEQUENCE', '')) );
+		// Not sending any emails if the system considers the update
+		// insignificant (refer to https://datatracker.ietf.org/doc/html/rfc5546#section-2.1.4 paragraph 1)
+		// AND sequence number has not changed (refer to https://datatracker.ietf.org/doc/html/rfc5546#section-2.1.4 paragraph 2)
+		if (!$iTipMessage->significantChange && !$sequenceIncremented) {
+			if (!$iTipMessage->scheduleStatus) {
+				$iTipMessage->scheduleStatus = '1.0;We got the message, but it\'s not significant enough to warrant an email';
+			}
+			return;
+		}
 		// No changed events after all - this shouldn't happen if there is significant change yet here we are
 		// The scheduling status is debatable
 		if(empty($vEvent)) {
