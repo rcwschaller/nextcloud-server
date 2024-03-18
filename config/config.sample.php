@@ -1946,7 +1946,9 @@ $CONFIG = [
  * where the default `datadirectory` is on network disk like NFS, or is otherwise
  * restricted. Defaults to the value of `datadirectory` if unset.
  *
- * The Web server user must have write access to this directory.
+ * If set, the value MUST be located _outside_ of the installation directory of Nextcloud and
+ * writable by the Web server user.
+ *
  */
 'updatedirectory' => '',
 
@@ -2366,17 +2368,6 @@ $CONFIG = [
  * Defaults to ``true``
  */
 'profile.enabled' => true,
-
-/**
- * Enable file metadata collection
- *
- * This is helpful for the mobile clients and will enable few optimizations in
- * the future for the preview generation.
- *
- * Note that when enabled, this data will be stored in the database and might increase
- * the database storage.
- */
-'enable_file_metadata' => true,
 
 /**
  * Allows to override the default scopes for Account data.
